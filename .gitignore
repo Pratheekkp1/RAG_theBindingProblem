@@ -16,3 +16,4 @@ data/pdfs/
 
 # Env variables
 .env
+results/

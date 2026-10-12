@@ -55,6 +55,10 @@ class BindingRAG:
         return "\n\n" + ("\n\n".join(parts))
 
     def answer(self, question: str, k: int = 6) -> str:
+        return self.answer_with_sources(question, k=k)[0]
+
+    def answer_with_sources(self, question: str, k: int = 6) -> tuple[str, List[str]]:
+        """Returns the generated answer and the ids of the chunks it was grounded on."""
         ids, docs, metadatas = self.retrieve(question, k=k)
         context = self.build_context(docs, metadatas)
 
@@ -81,7 +85,7 @@ QUESTION: {question}
             temperature=0.1,
         )
 
-        return completion.choices[0].message.content.strip()
+        return completion.choices[0].message.content.strip(), ids
 
 
 def interactive_cli():
@@ -110,9 +114,12 @@ def interactive_cli():
             continue
         if q.lower() in {"exit", "quit"}:
             break
-        answer = rag.answer(q)
+        answer, sources = rag.answer_with_sources(q)
         print("\n--- ANSWER ---")
         print(answer)
+        print("\n--- SOURCES ---")
+        for i, chunk_id in enumerate(sources):
+            print(f"CHUNK {i}: {chunk_id}")
         print("--------------\n")
 
 

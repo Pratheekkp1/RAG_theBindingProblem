@@ -1,13 +1,14 @@
 # src/granularity_experiment.py
 from __future__ import annotations
 
+import json
 from typing import List, Dict
 import numpy as np
 
 from sentence_transformers import SentenceTransformer
 
 from .rag import BindingRAG
-from .config import EMBEDDING_MODEL_NAME
+from .config import EMBEDDING_MODEL_NAME, PROJECT_ROOT
 
 
 QUESTIONS = [
@@ -32,7 +33,7 @@ def run_experiment():
     rag_medium = BindingRAG(granularity="medium")
     rag_large = BindingRAG(granularity="large")
 
-    results: Dict[str, Dict[str, str]] = {}
+    results: Dict[str, Dict] = {}
 
     for q in QUESTIONS:
         print(f"\nQuestion: {q}")
@@ -54,12 +55,20 @@ def run_experiment():
         sim_m_l = cosine_similarity(emb_medium, emb_large)
         sim_s_l = cosine_similarity(emb_small, emb_large)
 
+        results[q]["similarity"] = {
+            "small_vs_medium": round(sim_s_m, 4),
+            "medium_vs_large": round(sim_m_l, 4),
+            "small_vs_large": round(sim_s_l, 4),
+        }
+
         print(f"Similarity (small vs medium): {sim_s_m:.3f}")
         print(f"Similarity (medium vs large): {sim_m_l:.3f}")
         print(f"Similarity (small vs large): {sim_s_l:.3f}")
 
-    print("\nExperiment complete.")
-    print("You can log or save 'results' for a report if needed.")
+    out_path = PROJECT_ROOT / "results" / "granularity_experiment.json"
+    out_path.parent.mkdir(exist_ok=True)
+    out_path.write_text(json.dumps(results, indent=2))
+    print(f"\nExperiment complete. Results saved to {out_path}")
 
 
 if __name__ == "__main__":
